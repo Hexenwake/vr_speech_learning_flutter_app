@@ -10,6 +10,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'correctPage.dart';
+import 'wrongPage.dart';
+
 class TaskView extends StatefulWidget {
   final String recName;
   const TaskView({Key? key, required this.recName}) : super(key: key);
@@ -22,7 +25,7 @@ class _TaskViewState extends State<TaskView> {
   bool _isRecording = false;
   bool _isLoading = false;
   AudioRecorder record = AudioRecorder();
-  late Future<String> congratulateAudioPath;
+  // late Future<String> congratulateAudioPath;
   late Future<Map<String, String>?> futureData;
   final dio = Dio();
 
@@ -30,7 +33,7 @@ class _TaskViewState extends State<TaskView> {
   void initState() {
     // TODO: implement initState
     futureData = fetchData(widget.recName);
-    congratulateAudioPath = _getCongratulateAudioPath();
+    // congratulateAudioPath = _getCongratulateAudioPath();
     super.initState();
   }
 
@@ -56,83 +59,24 @@ class _TaskViewState extends State<TaskView> {
                 );
               }
               if (data!['answerStatus'] == 'Correct') {
-                return FutureBuilder(
-                    future: congratulateAudioPath,
-                    builder: (context, AsyncSnapshot audioSnapshot) {
-                      if (audioSnapshot.data == null) {
-                        return Container(
-                          alignment: Alignment.center,
-                          child: const CircularProgressIndicator(),
-                        );
-                      }
+                // String audio = audioSnapshot.data;
+                AssetsAudioPlayer.withId('CRGT').open(
+                  Audio("assets/audios/goodjob.mp3"),
+                  autoStart: true,
+                  showNotification: false,
+                );
 
-                      String audio = audioSnapshot.data;
-                      AssetsAudioPlayer.withId(audio).open(
-                        Audio.file(audio),
-                        autoStart: true,
-                        showNotification: false,
-                      );
+                return correctAnswerDialog(recName: widget.recName);
+              }
 
-                      return Scaffold(
-                        appBar: AppBar(
-                          title: const Text(''),
-                        ),
-                        body: GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: Column(
-                            children: [
-                              const Expanded(flex: 4, child: Text('')),
-                              Expanded(
-                                flex: 2,
-                                child: Container(
-                                  alignment: Alignment.center,
-                                  margin: const EdgeInsets.only(top: 15.0, bottom: 15.0, right: 15.0, left: 15.0),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                        // color: const Color(0xFF1C1C1C),
-                                        width: 2.0,
-                                        style: BorderStyle.solid),
-                                    borderRadius: BorderRadius.circular(10.0),
-                                    // color: const Color(0xFFD0C9C0),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        offset: Offset(8.0, 5.0),
-                                        blurRadius: 0.0,
-                                        spreadRadius: 0.5, // shadow direction: bottom right
-                                      ),
-                                      BoxShadow(
-                                        color: Colors.white,
-                                        offset: Offset(0.0, 0.0),
-                                        blurRadius: 0.0,
-                                        spreadRadius: 0.0,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(flex: 1, child: Image.asset('assets/images/animated_celebrate.GIF')),
-                                      const Expanded(
-                                        flex: 1,
-                                        child: Text('GOODJOB',
-                                            style: TextStyle(
-                                              fontSize: 25,
-                                              fontWeight: FontWeight.bold,
-                                            )),
-                                      ),
-                                      Expanded(flex: 1, child: Image.asset('assets/images/animated_celebrate_flipped.gif')),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const Expanded(flex: 4, child: Text('')),
-                            ],
-                          ),
-                        ),
-                      );
-                      // }
-                    });
+              if (data['answerStatus'] == 'Wrong') {
+                AssetsAudioPlayer.withId('CRGT').open(
+                  Audio("assets/audios/wrong.mp3"),
+                  autoStart: true,
+                  showNotification: false,
+                );
+
+                return wrongAnswerDialog(recName: widget.recName);
               }
               return Scaffold(
                 appBar: AppBar(title: Text(data["lessonName"]!)),
@@ -170,11 +114,14 @@ class _TaskViewState extends State<TaskView> {
                           Expanded(
                             flex: 6,
                             child: data['imgPath'] == null
-                                ? Text(data['lessonTran']?.toUpperCase() ?? 'No Transcript',
-                                    style: const TextStyle(
-                                      fontSize: 30,
-                                      fontWeight: FontWeight.bold,
-                                    ))
+                                ? Container(
+                                    alignment: Alignment.center,
+                                    child: Text(data['lessonTran']?.toUpperCase() ?? 'No Transcript',
+                                        style: const TextStyle(
+                                          fontSize: 50,
+                                          fontWeight: FontWeight.bold,
+                                        )),
+                                  )
                                 : Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Column(
@@ -228,7 +175,6 @@ class _TaskViewState extends State<TaskView> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // Text(data['answerStatus'] ?? ''),
                                 SizedBox(
                                   height: 50,
                                   width: 50,
@@ -255,47 +201,6 @@ class _TaskViewState extends State<TaskView> {
               );
           }
         });
-  }
-
-  // Future showCongratulatoryDialog(BuildContext context) async {
-  //   await AssetsAudioPlayer.withId(widget.recName.toString()).open(
-  //     Audio.file(await congratulateAudioPath),
-  //     autoStart: true,
-  //     showNotification: false,
-  //   );
-  //
-  //   return showPlatformDialog(context);
-  // }
-
-  Future<String> _getCongratulateAudioPath() async {
-    final Directory? directory = await getExternalStorageDirectory();
-    final String dirPath = '${directory!.path}/download';
-    final String filePath = '${directory.path}/download/congratulation.mp3';
-    bool isDirectoryExist = await Directory(dirPath).exists();
-    if (!isDirectoryExist) {
-      Directory(dirPath).create();
-    }
-    bool isFileExist = await File(filePath).exists();
-    if (!isFileExist) {
-      await downloadAudio();
-    }
-    return filePath;
-  }
-
-  Future<void> downloadAudio() async {
-    Response response;
-    final Directory? directory = await getExternalStorageDirectory();
-    final String dirPath = '${directory!.path}/download/congratulation.mp3';
-    response = await dio.download(
-      "https://bass-equipped-crane.ngrok-free.app/download",
-      dirPath,
-    );
-
-    if (response.statusCode == 200) {
-      print('Audio downloaded successfully.');
-    } else {
-      print('Failed to download audio. Status code: ${response.statusCode}');
-    }
   }
 
   Future<void> _startRecording(String fileName) async {

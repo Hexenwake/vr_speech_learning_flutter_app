@@ -144,18 +144,6 @@ class _StudentPageModiState extends State<StudentPageModi> {
     }
   }
 
-  // Future<List<String>> getUsersRecordings() async {
-  //   Directory? directory = await getExternalStorageDirectory();
-  //   final String dirPath = '${directory!.path}/Recordings';
-  //   final myDir = Directory(dirPath);
-  //   if (await myDir.exists() == false) {
-  //     myDir.create();
-  //   }
-  //   List<FileSystemEntity> recordings = myDir.listSync();
-  //   List<String> recordString = recordings.map((recordings) => recordings.path).toList();
-  //   return recordString;
-  // }
-
   Future<Map<String, Map<String, String>>> fetchTranscript() async {
     Map<String, Map<String, String>> fetchData = await getMapFromSP('Recordings');
     return fetchData;
