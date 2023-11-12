@@ -14,7 +14,7 @@ class correctAnswerDialog extends StatefulWidget {
 class _correctAnswerDialogState extends State<correctAnswerDialog> {
   @override
   Widget build(BuildContext context) {
-    Future.delayed(const Duration(seconds: 2), () async {
+    Future.delayed(const Duration(seconds: 4), () async {
       var data = await fetchData();
       data[widget.recName]!['answerStatus'] = '';
       saveMaptoSP(data, 'Recordings');
@@ -28,7 +28,7 @@ class _correctAnswerDialogState extends State<correctAnswerDialog> {
       ),
       body: GestureDetector(
         onTap: () {
-          Future.delayed(const Duration(seconds: 2), () async {
+          Future.delayed(const Duration(seconds: 1), () async {
             var data = await fetchData();
             data[widget.recName]!['answerStatus'] = '';
             saveMaptoSP(data, 'Recordings');
