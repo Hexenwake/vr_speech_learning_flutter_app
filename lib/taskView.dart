@@ -14,8 +14,8 @@ import 'correctPage.dart';
 import 'wrongPage.dart';
 
 class TaskView extends StatefulWidget {
-  final String recName;
-  const TaskView({Key? key, required this.recName}) : super(key: key);
+  final String recID;
+  const TaskView({Key? key, required this.recID}) : super(key: key);
 
   @override
   State<TaskView> createState() => _TaskViewState();
@@ -25,15 +25,13 @@ class _TaskViewState extends State<TaskView> {
   bool _isRecording = false;
   bool _isLoading = false;
   AudioRecorder record = AudioRecorder();
-  // late Future<String> congratulateAudioPath;
   late Future<Map<String, String>?> futureData;
   final dio = Dio();
 
   @override
   void initState() {
     // TODO: implement initState
-    futureData = fetchData(widget.recName);
-    // congratulateAudioPath = _getCongratulateAudioPath();
+    futureData = fetchData(widget.recID);
     super.initState();
   }
 
@@ -58,6 +56,26 @@ class _TaskViewState extends State<TaskView> {
                   child: Text("Error: ${snapshot.error}"),
                 );
               }
+              bool isPlaying = AssetsAudioPlayer.withId(widget.recID).isPlaying.value;
+
+              if (!isPlaying) {
+                AssetsAudioPlayer.withId(widget.recID.toString()).open(
+                  Audio.file(data!['path']!),
+                  autoStart: true,
+                  showNotification: false,
+                );
+              }
+
+              Future.delayed(const Duration(seconds: 3), () async {
+                if (!isPlaying) {
+                  AssetsAudioPlayer.withId(widget.recID.toString()).open(
+                    Audio.file(data!['path']!),
+                    autoStart: true,
+                    showNotification: false,
+                  );
+                }
+              });
+
               if (data!['answerStatus'] == 'Correct') {
                 // String audio = audioSnapshot.data;
                 AssetsAudioPlayer.withId('CRGT').open(
@@ -66,7 +84,7 @@ class _TaskViewState extends State<TaskView> {
                   showNotification: false,
                 );
 
-                return correctAnswerDialog(recName: widget.recName);
+                return correctAnswerDialog(recName: widget.recID);
               }
 
               if (data['answerStatus'] == 'Wrong') {
@@ -76,7 +94,7 @@ class _TaskViewState extends State<TaskView> {
                   showNotification: false,
                 );
 
-                return wrongAnswerDialog(recName: widget.recName);
+                return wrongAnswerDialog(recName: widget.recID);
               }
               return Scaffold(
                 appBar: AppBar(title: Text(data["lessonName"]!)),
@@ -155,12 +173,12 @@ class _TaskViewState extends State<TaskView> {
                             child: SizedBox(
                                 height: 50,
                                 width: 50,
-                                child: AssetsAudioPlayer.withId(widget.recName).builderIsPlaying(builder: (context, isPlaying) {
+                                child: AssetsAudioPlayer.withId(widget.recID).builderIsPlaying(builder: (context, isPlaying) {
                                   return FloatingActionButton(
                                     onPressed: () {
                                       isPlaying
-                                          ? AssetsAudioPlayer.withId(widget.recName.toString()).pause()
-                                          : AssetsAudioPlayer.withId(widget.recName.toString()).open(
+                                          ? AssetsAudioPlayer.withId(widget.recID.toString()).pause()
+                                          : AssetsAudioPlayer.withId(widget.recID.toString()).open(
                                               Audio.file(data['path']!),
                                               autoStart: true,
                                               showNotification: false,
@@ -182,9 +200,9 @@ class _TaskViewState extends State<TaskView> {
                                     backgroundColor: _isRecording ? Colors.red : Colors.green,
                                     onPressed: () {
                                       if (_isRecording) {
-                                        _stopRecording(widget.recName, context);
+                                        _stopRecording(widget.recID, context);
                                       } else {
-                                        _startRecording(widget.recName);
+                                        _startRecording(widget.recID);
                                       }
                                     },
                                     child: Icon(_isRecording ? Icons.stop : Icons.mic),
@@ -237,6 +255,7 @@ class _TaskViewState extends State<TaskView> {
     Map<String, Map<String, String>> map = await getMapFromSP('Recordings');
 
     if (map[lessonId]!['lessonTran']! == answer) {
+      print('The answer $answer');
       String answerStatus = 'Correct';
       map[lessonId]!["answerStatus"] = answerStatus;
       saveMaptoSP(map, 'Recordings');
@@ -249,7 +268,7 @@ class _TaskViewState extends State<TaskView> {
     setState(() {
       _isRecording = false;
       _isLoading = false;
-      futureData = fetchData(widget.recName);
+      futureData = fetchData(widget.recID);
     });
   }
 

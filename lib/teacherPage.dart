@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
@@ -8,9 +7,10 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vr_speech_learning/ReportPage.dart';
 
 import 'add_lesson_dialog.dart';
+import 'util/helper.dart';
 
 class TeacherPage extends StatefulWidget {
   const TeacherPage({Key? key}) : super(key: key);
@@ -23,7 +23,6 @@ class _TeacherPage extends State<TeacherPage> {
   bool _isRecording = false;
   AudioRecorder record = AudioRecorder();
   Future<Map<String, Map<String, String>>>? future2;
-  late int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -36,17 +35,18 @@ class _TeacherPage extends State<TeacherPage> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(3.0),
-          child: Container(
-            color: Colors.black,
-            height: 2.5,
-          ),
-        ),
         title: const Text(
           'Add Your Lesson Here',
-          style: TextStyle(color: Colors.black),
         ),
+        actions: [
+          PopupMenuButton(onSelected: (result) {
+            if (result == 0) {
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) => ReportPage()));
+            }
+          }, itemBuilder: (BuildContext context) {
+            return [const PopupMenuItem(value: 0, child: Text('Report'))];
+          })
+        ],
       ),
       body: Container(
         margin: const EdgeInsets.all(10.0),
@@ -80,14 +80,11 @@ class _TeacherPage extends State<TeacherPage> {
                         alignment: Alignment.center,
                         margin: const EdgeInsets.only(bottom: 15.0, right: 5.0, left: 5.0),
                         decoration: BoxDecoration(
-                          border: Border.all(
-                              // color: const Color(0xFF1C1C1C),
-                              width: 2.0,
-                              style: BorderStyle.solid),
+                          border: Border.all(color: Color(0xFF1C1C1C), width: 2.0, style: BorderStyle.solid),
                           borderRadius: BorderRadius.circular(10.0),
-                          // color: const Color(0xFFD0C9C0),
                           boxShadow: const [
                             BoxShadow(
+                              color: Color(0xFF1C1C1C),
                               offset: Offset(8.0, 5.0),
                               blurRadius: 0.0,
                               spreadRadius: 0.5, // shadow direction: bottom right
@@ -106,7 +103,6 @@ class _TeacherPage extends State<TeacherPage> {
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Text('Id:  ${data[key]["lessonId"]}'),
                               Text('Description: ${data[key]["lessonDesc"]}'),
                             ],
                           ),
@@ -290,37 +286,32 @@ class _TeacherPage extends State<TeacherPage> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return const AddLessonDialog();
-            },
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddLessonDialog()),
           );
+
+          setState(() {
+            future2 = fetchTranscript();
+          });
         },
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar: Container(
-        color: Colors.black,
-        child: Padding(
-          padding: const EdgeInsets.only(top: 5.0),
-          child: BottomAppBar(
-              shape: const CircularNotchedRectangle(),
-              color: Colors.white,
-              child: IconTheme(
-                data: const IconThemeData(color: Colors.black),
-                child: Row(
-                  children: <Widget>[
-                    IconButton(
-                      tooltip: 'Open navigation menu',
-                      icon: const Icon(Icons.menu),
-                      onPressed: () {},
-                    ),
-                  ],
-                ),
-              )),
-        ),
-      ),
+      bottomNavigationBar: BottomAppBar(
+          shape: const CircularNotchedRectangle(),
+          color: const Color(0xFF1f5c70),
+          child: Row(
+            children: <Widget>[
+              PopupMenuButton(onSelected: (result) {
+                if (result == 0) {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => ReportPage()));
+                }
+              }, itemBuilder: (BuildContext context) {
+                return [const PopupMenuItem(value: 0, child: Text('Report'))];
+              })
+            ],
+          )),
     );
   }
 
@@ -350,10 +341,10 @@ class _TeacherPage extends State<TeacherPage> {
 
   Future<void> _stopRecording(String lessonId) async {
     final path = await record.stop();
-    Map<String, Map<String, String>> map = await getMapFromSP('Recordings');
+    Map<String, Map<String, String>> map = await HelperFunc.getMapFromSP('Recordings');
     map[lessonId]!["path"] = path!;
 
-    saveMaptoSP(map, 'Recordings');
+    HelperFunc.saveMaptoSP(map, 'Recordings');
 
     setState(() {
       _isRecording = false;
@@ -404,9 +395,9 @@ class _TeacherPage extends State<TeacherPage> {
     );
 
     if (pickedFile != null) {
-      Map<String, Map<String, String>> map = await getMapFromSP('Recordings');
+      Map<String, Map<String, String>> map = await HelperFunc.getMapFromSP('Recordings');
       map[lessonId]!["imgPath"] = pickedFile.path;
-      saveMaptoSP(map, 'Recordings');
+      HelperFunc.saveMaptoSP(map, 'Recordings');
 
       setState(() {
         future2 = fetchTranscript();
@@ -415,9 +406,9 @@ class _TeacherPage extends State<TeacherPage> {
   }
 
   Future<void> _deletePhoto(String lessonId) async {
-    Map<String, Map<String, String>> map = await getMapFromSP('Recordings');
+    Map<String, Map<String, String>> map = await HelperFunc.getMapFromSP('Recordings');
     map[lessonId]!.remove('imgPath');
-    saveMaptoSP(map, 'Recordings');
+    HelperFunc.saveMaptoSP(map, 'Recordings');
 
     setState(() {
       future2 = fetchTranscript();
@@ -425,10 +416,10 @@ class _TeacherPage extends State<TeacherPage> {
   }
 
   Future<void> _deleteLesson(String lessonId) async {
-    Map<String, Map<String, String>> map = await getMapFromSP('Recordings');
+    Map<String, Map<String, String>> map = await HelperFunc.getMapFromSP('Recordings');
     _deleteRecording(map[lessonId]!['path']);
     map.remove(lessonId);
-    saveMaptoSP(map, 'Recordings');
+    HelperFunc.saveMaptoSP(map, 'Recordings');
 
     setState(() {
       future2 = fetchTranscript();
@@ -463,53 +454,13 @@ class _TeacherPage extends State<TeacherPage> {
     var res = await request.send();
     var response = await http.Response.fromStream(res);
     String transcript = response.body;
-    Map<String, Map<String, String>> map = await getMapFromSP('Recordings');
+    Map<String, Map<String, String>> map = await HelperFunc.getMapFromSP('Recordings');
     map[lessonId]!['lessonTran'] = transcript;
-    await saveMaptoSP(map, 'Recordings');
+    await HelperFunc.saveMaptoSP(map, 'Recordings');
     setState(() {
       future2 = fetchTranscript();
     });
     // print(transcript);
-  }
-
-  // Future<void> loadSharedPreferences() async {
-  //   prefs = await SharedPreferences.getInstance();
-  // }
-
-  Future<void> saveStringtoSP(String key, String value) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (value.isNotEmpty && key.isNotEmpty) {
-      prefs.setString(key, value);
-    }
-  }
-
-  Future<String> getStringFromSP(String key) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? value = prefs.getString(key);
-    print(value);
-    if (key.isEmpty || value == null) {
-      return '';
-    }
-    return value;
-  }
-
-  Future<void> saveMaptoSP(Map<String, Map<String, String>> map, String key) async {
-    String jsonString = jsonEncode(map);
-    await saveStringtoSP(key, jsonString);
-  }
-
-  Future<Map<String, Map<String, String>>> getMapFromSP(String key) async {
-    String string = await getStringFromSP(key);
-    if (string.isNotEmpty) {
-      Map<String, dynamic> jsonMap = Map.castFrom(json.decode(string));
-      Map<String, Map<String, String>> resultMap = {};
-      jsonMap.forEach((key, value) {
-        resultMap[key] = Map<String, String>.from(value);
-      });
-      return resultMap;
-    } else {
-      return {};
-    }
   }
 
   Future<List<String>> getUsersRecordings() async {
@@ -525,7 +476,7 @@ class _TeacherPage extends State<TeacherPage> {
   }
 
   Future<Map<String, Map<String, String>>> fetchTranscript() async {
-    Map<String, Map<String, String>> fetchData = await getMapFromSP('Recordings');
+    Map<String, Map<String, String>> fetchData = await HelperFunc.getMapFromSP('Recordings');
     return fetchData;
   }
 }

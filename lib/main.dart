@@ -15,22 +15,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'VR_Speech_Learning',
-      theme: lightTheme,
+      theme: ThemeData(
+        // textTheme: GoogleFonts.oswaldTextTheme().apply(fontSizeFactor: 1.1, fontSizeDelta: 2.0),
+        textTheme: Theme.of(context).textTheme.apply(
+              fontSizeFactor: 1.1,
+              fontSizeDelta: 1.0,
+            ),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1f5c70)),
+      ),
       home: const MyHomePage(),
     );
   }
-
-  ThemeData lightTheme = ThemeData(
-    brightness: Brightness.light,
-    // useMaterial3: true,
-    textTheme: const TextTheme(
-      displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-      bodyLarge: TextStyle(fontSize: 18, color: Colors.black87),
-    ),
-    appBarTheme: const AppBarTheme(
-      color: Colors.white,
-      iconTheme: IconThemeData(color: Colors.black87),
-    ),
-    colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-  );
 }

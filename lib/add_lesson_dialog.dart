@@ -84,7 +84,6 @@ class _AddLessonDialogState extends State<AddLessonDialog> {
           onPressed: () {
             final lessonName = taskNameController.text;
             final lessonDesc = taskDescController.text;
-            // final taskTag = selectedValue;
             _addLesson(lessonName: lessonName, lessonDesc: lessonDesc);
             Navigator.of(context, rootNavigator: true).pop();
           },

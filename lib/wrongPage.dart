@@ -17,6 +17,8 @@ class _wrongAnswerDialogState extends State<wrongAnswerDialog> {
     Future.delayed(const Duration(seconds: 2), () async {
       var data = await fetchData();
       data[widget.recName]!['answerStatus'] = '';
+      //save the task are answered correctly
+      data[widget.recName]!['task_report'] = 'wrong';
       saveMaptoSP(data, 'Recordings');
       setState(() {
         Navigator.of(context).pop();

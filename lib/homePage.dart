@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vr_speech_learning/teacherPage.dart';
 
-import 'studentPage_modi.dart';
+import 'studentPage.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -25,17 +25,16 @@ class _MyHomePageState extends State<MyHomePage> {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
             )),
       )),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(
-            flex: 8,
+            flex: 2,
             child: GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => StudentPageModi()));
+                Navigator.push(context, MaterialPageRoute(builder: (context) => StudentPage()));
               },
               child: Container(
                   alignment: Alignment.center,

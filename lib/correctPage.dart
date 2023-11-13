@@ -16,7 +16,11 @@ class _correctAnswerDialogState extends State<correctAnswerDialog> {
   Widget build(BuildContext context) {
     Future.delayed(const Duration(seconds: 4), () async {
       var data = await fetchData();
+      //reset answer status
       data[widget.recName]!['answerStatus'] = '';
+      //save the task are answered correctly
+      data[widget.recName]!['task_report'] = 'correct';
+
       saveMaptoSP(data, 'Recordings');
       setState(() {
         Navigator.of(context).pop();

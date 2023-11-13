@@ -4,16 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vr_speech_learning/taskView.dart';
 
-class StudentPageModi extends StatefulWidget {
-  const StudentPageModi({Key? key}) : super(key: key);
+class StudentPage extends StatefulWidget {
+  const StudentPage({Key? key}) : super(key: key);
 
   @override
-  State<StudentPageModi> createState() => _StudentPageModiState();
+  State<StudentPage> createState() => _StudentPageState();
 }
 
-class _StudentPageModiState extends State<StudentPageModi> {
+class _StudentPageState extends State<StudentPage> {
   Future<Map<String, Map<String, String>>>? futureData;
 
+  @override
   void initState() {
     super.initState();
     futureData = fetchTranscript();
@@ -24,16 +25,8 @@ class _StudentPageModiState extends State<StudentPageModi> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(3.0),
-          child: Container(
-            color: Colors.black,
-            height: 2.5,
-          ),
-        ),
         title: const Text(
           'Tasks',
-          style: TextStyle(color: Colors.black),
         ),
       ),
       body: Container(
@@ -95,7 +88,7 @@ class _StudentPageModiState extends State<StudentPageModi> {
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) => TaskView(
-                                          recName: key,
+                                          recID: key,
                                         )),
                               );
                             },
