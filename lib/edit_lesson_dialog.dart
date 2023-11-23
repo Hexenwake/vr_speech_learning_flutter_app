@@ -1,18 +1,24 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-class AddLessonDialog extends StatefulWidget {
-  const AddLessonDialog({super.key});
+import 'util/helper.dart';
+
+class EditLessonDialog extends StatefulWidget {
+  final String lessonID;
+  const EditLessonDialog({super.key, required this.lessonID});
 
   @override
-  State<AddLessonDialog> createState() => _AddLessonDialogState();
+  State<EditLessonDialog> createState() => _EditLessonDialogState();
 }
 
-class _AddLessonDialogState extends State<AddLessonDialog> {
-  final TextEditingController taskNameController = TextEditingController();
-  final TextEditingController taskDescController = TextEditingController();
+class _EditLessonDialogState extends State<EditLessonDialog> {
+  TextEditingController taskNameController = TextEditingController();
+  TextEditingController taskDescController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _setValue();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +27,7 @@ class _AddLessonDialogState extends State<AddLessonDialog> {
     return AlertDialog(
       scrollable: true,
       title: const Text(
-        'Pelajaran Baru',
+        'Sunting Pelajaran',
         textAlign: TextAlign.center,
         style: TextStyle(fontSize: 16, color: Colors.brown),
       ),
@@ -39,7 +45,7 @@ class _AddLessonDialogState extends State<AddLessonDialog> {
                     horizontal: 20,
                     vertical: 20,
                   ),
-                  hintText: 'Topik Pelajaran',
+                  hintText: 'Lesson Name',
                   hintStyle: const TextStyle(fontSize: 14),
                   icon: const Icon(Icons.list_rounded, color: Colors.brown),
                   border: OutlineInputBorder(
@@ -58,7 +64,7 @@ class _AddLessonDialogState extends State<AddLessonDialog> {
                     horizontal: 20,
                     vertical: 20,
                   ),
-                  hintText: 'Huraian',
+                  hintText: 'Description',
                   hintStyle: const TextStyle(fontSize: 14),
                   icon: const Icon(Icons.bubble_chart, color: Colors.brown),
                   border: OutlineInputBorder(
@@ -78,71 +84,44 @@ class _AddLessonDialogState extends State<AddLessonDialog> {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.grey,
           ),
-          child: const Text('Batal'),
+          child: const Text('Cancel'),
         ),
         ElevatedButton(
           onPressed: () {
             final lessonName = taskNameController.text;
             final lessonDesc = taskDescController.text;
-            _addLesson(lessonName: lessonName, lessonDesc: lessonDesc);
+            _editLesson(lessonName: lessonName, lessonDesc: lessonDesc, lessonID: widget.lessonID);
             Navigator.of(context, rootNavigator: true).pop();
           },
-          child: const Text('Simpan'),
+          child: const Text('Save'),
         ),
       ],
     );
   }
 
-  Future _addLesson({required String lessonName, required String lessonDesc}) async {
-    Map<String, Map<String, String>> old = await getMapFromSP('Recordings');
-    String lessonId = DateTime.now().millisecondsSinceEpoch.toString();
-    old[lessonId] = {};
-    old[lessonId]!['lessonDesc'] = lessonDesc;
-    old[lessonId]!['lessonName'] = lessonName;
-    old[lessonId]!['lessonId'] = lessonId;
+  Future _editLesson({required String lessonName, required String lessonDesc, required String lessonID}) async {
+    Map<String, Map<String, String>> old = await HelperFunc.getMapFromSP('Recordings');
+    old[lessonID]!['lessonDesc'] = lessonDesc;
+    old[lessonID]!['lessonName'] = lessonName;
+    old[lessonID]!['lessonId'] = lessonID;
 
-    await saveMaptoSP(old, 'Recordings');
+    await HelperFunc.saveMaptoSP(old, 'Recordings');
     _clearAll();
+  }
+
+  Future<Map<String, String>?> _getData(String lessonID) async {
+    Map<String, Map<String, String>> old = await HelperFunc.getMapFromSP('Recordings');
+    return old[lessonID];
+  }
+
+  Future<void> _setValue() async {
+    var data = await _getData(widget.lessonID);
+    taskNameController.text = data!['lessonName']!;
+    taskDescController.text = data['lessonDesc']!;
   }
 
   void _clearAll() {
     taskNameController.text = '';
     taskDescController.text = '';
-  }
-
-  Future<void> saveStringtoSP(String key, String value) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (value.isNotEmpty && key.isNotEmpty) {
-      prefs.setString(key, value);
-    }
-  }
-
-  Future<String> getStringFromSP(String key) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? value = prefs.getString(key);
-    // print(value);
-    if (key.isEmpty || value == null) {
-      return '';
-    }
-    return value;
-  }
-
-  Future<void> saveMaptoSP(Map<String, dynamic> map, String key) async {
-    String jsonString = jsonEncode(map);
-    await saveStringtoSP(key, jsonString);
-  }
-
-  Future<Map<String, Map<String, String>>> getMapFromSP(String key) async {
-    String string = await getStringFromSP(key);
-    if (string.isNotEmpty) {
-      Map<String, dynamic> jsonMap = Map.castFrom(json.decode(string));
-      Map<String, Map<String, String>> resultMap = {};
-      jsonMap.forEach((key, value) {
-        resultMap[key] = Map<String, String>.from(value);
-      });
-      return resultMap;
-    } else {
-      return {};
-    }
   }
 }

@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vr_speech_learning/taskView.dart';
 
 class StudentPage extends StatefulWidget {
-  const StudentPage({Key? key}) : super(key: key);
+  const StudentPage({super.key});
 
   @override
   State<StudentPage> createState() => _StudentPageState();
@@ -26,79 +26,91 @@ class _StudentPageState extends State<StudentPage> {
       appBar: AppBar(
         elevation: 0,
         title: const Text(
-          'Tasks',
+          'Tugasan',
         ),
       ),
-      body: Container(
-        margin: const EdgeInsets.all(10.0),
-        child: FutureBuilder(
-            future: futureData,
-            builder: (context, AsyncSnapshot<Map<String, Map<String, String>>> snapshot) {
-              switch (snapshot.connectionState) {
-                case ConnectionState.none:
-                case ConnectionState.waiting:
-                case ConnectionState.active:
+      body: FutureBuilder(
+          future: futureData,
+          builder: (context, AsyncSnapshot<Map<String, Map<String, String>>> snapshot) {
+            switch (snapshot.connectionState) {
+              case ConnectionState.none:
+              case ConnectionState.waiting:
+              case ConnectionState.active:
+                return Container(
+                  alignment: Alignment.center,
+                  child: const Text("Loading"),
+                );
+              case ConnectionState.done:
+                if (snapshot.hasError) {
                   return Container(
                     alignment: Alignment.center,
-                    child: const Text("Loading"),
+                    child: Text("Error: ${snapshot.error}"),
                   );
-                case ConnectionState.done:
-                  if (snapshot.hasError) {
-                    return Container(
-                      alignment: Alignment.center,
-                      child: Text("Error: ${snapshot.error}"),
-                    );
-                  }
-                  Map data = snapshot.data!;
-                  var keysList = data.keys.toList();
+                }
+                Map data = snapshot.data!;
+                var keysList = data.keys.toList();
 
-                  return ListView.builder(
-                      reverse: false,
-                      itemCount: data.length,
-                      itemBuilder: (context, int index) {
-                        var key = keysList[index];
-                        return Container(
-                          alignment: Alignment.center,
-                          margin: const EdgeInsets.only(bottom: 15.0, right: 5.0, left: 5.0),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                                // color: const Color(0xFF1C1C1C),
-                                width: 2.0,
-                                style: BorderStyle.solid),
-                            borderRadius: BorderRadius.circular(10.0),
-                            // color: const Color(0xFFD0C9C0),
-                            boxShadow: const [
-                              BoxShadow(
-                                offset: Offset(8.0, 5.0),
-                                blurRadius: 0.0,
-                                spreadRadius: 0.5, // shadow direction: bottom right
+                return ListView.builder(
+                    reverse: false,
+                    itemCount: data.length,
+                    itemBuilder: (context, int index) {
+                      var key = keysList[index];
+                      return data[key]["lessonTran"] == null || data[key]["lessonTran"] != ''
+                          ? Container(
+                              alignment: Alignment.center,
+                              margin: const EdgeInsets.only(top: 15.0, right: 15.0, left: 15.0),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: const Color(0xFF161b33), width: 5.0, style: BorderStyle.solid),
+                                color: const Color(0xFFF1dac4),
+                                borderRadius: BorderRadius.circular(5.0),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0xFF161b33),
+                                    offset: Offset(8.0, 5.0),
+                                    blurRadius: 0.0,
+                                    spreadRadius: 0.5, // shadow direction: bottom right
+                                  ),
+                                  BoxShadow(
+                                    color: Colors.white,
+                                    offset: Offset(0.0, 0.0),
+                                    blurRadius: 0.0,
+                                    spreadRadius: 0.0,
+                                  ),
+                                ],
                               ),
-                              BoxShadow(
-                                color: Colors.white,
-                                offset: Offset(0.0, 0.0),
-                                blurRadius: 0.0,
-                                spreadRadius: 0.0,
+                              child: ListTile(
+                                title: Text('${data[key]["lessonName"]}'),
+                                trailing: _getTrailingAnswerStatus(data[key]["task_report"] ?? ''),
+                                onTap: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => TaskView(
+                                              recID: key,
+                                            )),
+                                  );
+                                  setState(() {
+                                    futureData = fetchTranscript();
+                                  });
+                                },
                               ),
-                            ],
-                          ),
-                          child: ListTile(
-                            title: Text('${data[key]["lessonName"]}'),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => TaskView(
-                                          recID: key,
-                                        )),
-                              );
-                            },
-                          ),
-                        );
-                      });
-              }
-            }),
-      ),
+                            )
+                          : const Text('');
+                    });
+            }
+          }),
     );
+  }
+
+  Widget _getTrailingAnswerStatus(String status) {
+    if (status == 'correct') {
+      return const Icon(
+        Icons.check_circle,
+        color: Colors.green,
+      );
+    } else {
+      return const Text('');
+    }
   }
 
   Future<void> saveStringtoSP(String key, String value) async {

@@ -15,7 +15,7 @@ import 'wrongPage.dart';
 
 class TaskView extends StatefulWidget {
   final String recID;
-  const TaskView({Key? key, required this.recID}) : super(key: key);
+  const TaskView({super.key, required this.recID});
 
   @override
   State<TaskView> createState() => _TaskViewState();
@@ -24,6 +24,7 @@ class TaskView extends StatefulWidget {
 class _TaskViewState extends State<TaskView> {
   bool _isRecording = false;
   bool _isLoading = false;
+  bool _audioPlayed = false;
   AudioRecorder record = AudioRecorder();
   late Future<Map<String, String>?> futureData;
   final dio = Dio();
@@ -33,6 +34,11 @@ class _TaskViewState extends State<TaskView> {
     // TODO: implement initState
     futureData = fetchData(widget.recID);
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -56,26 +62,17 @@ class _TaskViewState extends State<TaskView> {
                   child: Text("Error: ${snapshot.error}"),
                 );
               }
-              bool isPlaying = AssetsAudioPlayer.withId(widget.recID).isPlaying.value;
 
-              if (!isPlaying) {
+              if (!_audioPlayed) {
                 AssetsAudioPlayer.withId(widget.recID.toString()).open(
                   Audio.file(data!['path']!),
                   autoStart: true,
                   showNotification: false,
                 );
+                _audioPlayed = true;
               }
 
-              Future.delayed(const Duration(seconds: 3), () async {
-                if (!isPlaying) {
-                  AssetsAudioPlayer.withId(widget.recID.toString()).open(
-                    Audio.file(data!['path']!),
-                    autoStart: true,
-                    showNotification: false,
-                  );
-                }
-              });
-
+              //Correct Dialog Pop Up
               if (data!['answerStatus'] == 'Correct') {
                 // String audio = audioSnapshot.data;
                 AssetsAudioPlayer.withId('CRGT').open(
@@ -83,36 +80,35 @@ class _TaskViewState extends State<TaskView> {
                   autoStart: true,
                   showNotification: false,
                 );
-
                 return correctAnswerDialog(recName: widget.recID);
               }
 
+              //Wrong Dialog Pop Up
               if (data['answerStatus'] == 'Wrong') {
                 AssetsAudioPlayer.withId('CRGT').open(
                   Audio("assets/audios/wrong.mp3"),
                   autoStart: true,
                   showNotification: false,
                 );
-
                 return wrongAnswerDialog(recName: widget.recID);
               }
               return Scaffold(
-                appBar: AppBar(title: Text(data["lessonName"]!)),
+                appBar: AppBar(
+                  title: Text(data["lessonName"]!),
+                ),
                 body: ModalProgressHUD(
                   inAsyncCall: _isLoading,
                   child: Center(
                     child: Container(
                       alignment: Alignment.center,
-                      margin: const EdgeInsets.only(top: 15.0, bottom: 15.0, right: 15.0, left: 15.0),
+                      margin: const EdgeInsets.only(bottom: 15.0, right: 15.0, left: 15.0, top: 15.0),
                       decoration: BoxDecoration(
-                        border: Border.all(
-                            // color: const Color(0xFF1C1C1C),
-                            width: 2.0,
-                            style: BorderStyle.solid),
-                        borderRadius: BorderRadius.circular(10.0),
-                        // color: const Color(0xFFD0C9C0),
+                        border: Border.all(color: const Color(0xFF161b33), width: 5.0, style: BorderStyle.solid),
+                        color: const Color(0xFFF1dac4),
+                        borderRadius: BorderRadius.circular(5.0),
                         boxShadow: const [
                           BoxShadow(
+                            color: Color(0xFF161b33),
                             offset: Offset(8.0, 5.0),
                             blurRadius: 0.0,
                             spreadRadius: 0.5, // shadow direction: bottom right
@@ -224,6 +220,7 @@ class _TaskViewState extends State<TaskView> {
   Future<void> _startRecording(String fileName) async {
     setState(() {
       record = AudioRecorder();
+      _isRecording = true;
     });
     final Directory? directory = await getExternalStorageDirectory();
     final String dirPath = '${directory!.path}/Submission';
@@ -237,9 +234,6 @@ class _TaskViewState extends State<TaskView> {
       }
       // Start recording to file
       await record.start(const RecordConfig(), path: filePath);
-      setState(() {
-        _isRecording = true;
-      });
     }
   }
 
@@ -251,29 +245,15 @@ class _TaskViewState extends State<TaskView> {
     record.dispose();
 
     await Future.delayed(const Duration(seconds: 2));
-    String answer = await _uploadAudio(File(path!), context);
-    Map<String, Map<String, String>> map = await getMapFromSP('Recordings');
-
-    if (map[lessonId]!['lessonTran']! == answer) {
-      print('The answer $answer');
-      String answerStatus = 'Correct';
-      map[lessonId]!["answerStatus"] = answerStatus;
-      saveMaptoSP(map, 'Recordings');
-    } else {
-      String answerStatus = 'Wrong';
-      map[lessonId]!["answerStatus"] = answerStatus;
-      saveMaptoSP(map, 'Recordings');
-    }
-
+    await _uploadAudio(File(path!), context, lessonId);
     setState(() {
       _isRecording = false;
       _isLoading = false;
-      futureData = fetchData(widget.recID);
     });
   }
 
-  Future<String> _uploadAudio(File file, context) async {
-    final request = http.MultipartRequest('POST', Uri.https('bass-equipped-crane.ngrok-free.app', '/upload'));
+  Future<void> _uploadAudio(File file, context, String lessonId) async {
+    final request = http.MultipartRequest('POST', Uri.https('endless-beagle-honestly.ngrok-free.app', '/upload'));
     String filename = file.path.split('/').last;
     request.files.add(
       http.MultipartFile(
@@ -288,9 +268,53 @@ class _TaskViewState extends State<TaskView> {
     request.headers.addAll(headers);
 
     var res = await request.send();
-    var response = await http.Response.fromStream(res);
-    String transcript = response.body;
-    return transcript;
+    var response = await http.Response.fromStream(res).timeout(const Duration(seconds: 5));
+
+    if (response.statusCode == 200) {
+      String transcript = response.body;
+      Map<String, Map<String, String>> map = await getMapFromSP('Recordings');
+
+      if (map[lessonId]!['lessonTran']! == transcript) {
+        print('The answer $transcript');
+        String answerStatus = 'Correct';
+        map[lessonId]!["answerStatus"] = answerStatus;
+        saveMaptoSP(map, 'Recordings');
+      } else {
+        String answerStatus = 'Wrong';
+        map[lessonId]!["answerStatus"] = answerStatus;
+        saveMaptoSP(map, 'Recordings');
+      }
+
+      setState(() {
+        futureData = fetchData(widget.recID);
+      });
+    } else {
+      showOfflinePopup();
+    }
+  }
+
+  void showOfflinePopup() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Server Error'),
+        content: const Text('Please try again later.'),
+        actions: <Widget>[
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _isLoading = false;
+              });
+              Navigator.of(context).pop();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Back'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> saveStringtoSP(String key, String value) async {
@@ -303,7 +327,6 @@ class _TaskViewState extends State<TaskView> {
   Future<String> getStringFromSP(String key) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? value = prefs.getString(key);
-    // print(value);
     if (key.isEmpty || value == null) {
       return '';
     }

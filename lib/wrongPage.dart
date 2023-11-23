@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class wrongAnswerDialog extends StatefulWidget {
   final String recName;
-  const wrongAnswerDialog({Key? key, required this.recName}) : super(key: key);
+  const wrongAnswerDialog({super.key, required this.recName});
 
   @override
   State<wrongAnswerDialog> createState() => _wrongAnswerDialogState();
@@ -46,16 +46,14 @@ class _wrongAnswerDialogState extends State<wrongAnswerDialog> {
               flex: 2,
               child: Container(
                 alignment: Alignment.center,
-                margin: const EdgeInsets.only(top: 15.0, bottom: 15.0, right: 15.0, left: 15.0),
+                margin: const EdgeInsets.only(bottom: 15.0, right: 15.0, left: 15.0),
                 decoration: BoxDecoration(
-                  border: Border.all(
-                      // color: const Color(0xFF1C1C1C),
-                      width: 2.0,
-                      style: BorderStyle.solid),
-                  borderRadius: BorderRadius.circular(10.0),
-                  // color: const Color(0xFFD0C9C0),
+                  border: Border.all(color: const Color(0xFF161b33), width: 5.0, style: BorderStyle.solid),
+                  color: const Color(0xFFF1dac4),
+                  borderRadius: BorderRadius.circular(5.0),
                   boxShadow: const [
                     BoxShadow(
+                      color: Color(0xFF161b33),
                       offset: Offset(8.0, 5.0),
                       blurRadius: 0.0,
                       spreadRadius: 0.5, // shadow direction: bottom right
@@ -104,7 +102,6 @@ class _wrongAnswerDialogState extends State<wrongAnswerDialog> {
   Future<String> getStringFromSP(String key) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? value = prefs.getString(key);
-    // print(value);
     if (key.isEmpty || value == null) {
       return '';
     }

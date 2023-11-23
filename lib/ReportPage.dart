@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'util/helper.dart';
 
 class ReportPage extends StatefulWidget {
-  const ReportPage({Key? key}) : super(key: key);
+  const ReportPage({super.key});
 
   @override
   State<ReportPage> createState() => _ReportPageState();
@@ -23,19 +23,20 @@ class _ReportPageState extends State<ReportPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Report'),
+        title: const Text('Laporan'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Container(
           alignment: Alignment.center,
-          margin: const EdgeInsets.only(bottom: 15.0, right: 5.0, left: 5.0),
+          margin: const EdgeInsets.only(bottom: 15.0, right: 6.0, left: 6.0),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF1C1C1C), width: 2.0, style: BorderStyle.solid),
-            borderRadius: BorderRadius.circular(10.0),
+            border: Border.all(color: const Color(0xFF161b33), width: 5.0, style: BorderStyle.solid),
+            color: const Color(0xFFF1dac4),
+            borderRadius: BorderRadius.circular(5.0),
             boxShadow: const [
               BoxShadow(
-                color: Color(0xFF1C1C1C),
+                color: Color(0xFF161b33),
                 offset: Offset(8.0, 5.0),
                 blurRadius: 0.0,
                 spreadRadius: 0.5, // shadow direction: bottom right
@@ -73,9 +74,9 @@ class _ReportPageState extends State<ReportPage> {
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
                         children: [
-                          Row(
-                            children: const [
-                              Expanded(flex: 6, child: Text('Lesson Name')),
+                          const Row(
+                            children: [
+                              Expanded(flex: 6, child: Text('Nama Topic')),
                               Expanded(flex: 1, child: Text('|')),
                               Expanded(flex: 3, child: Text('Status')),
                             ],
